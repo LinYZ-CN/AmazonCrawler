@@ -67,14 +67,14 @@ class SellerShopSpider(scrapy.Spider):
             raise ValueError(f"无效的地区缩写：{region}。有效的地区包括：{', '.join(self.domain_mapping.keys())}")
         if isinstance(asin_all, str):
             self.asin_all = [asin_all]  # 字符串转单元素列表
-        if asin_all is None:
-            db = AmazonSellerCrawlerDB()
-            asin_all = db.get_products_to_crawl(region=self.region)
-            self.asin_all = asin_all if asin_all else []
+
+        # # 从数据中获取
+        # if asin_all is None:
+        #     db = AmazonSellerCrawlerDB()
+        #     asin_all = db.get_products_to_crawl(region=self.region)
+        #     self.asin_all = asin_all if asin_all else []
         # 用于存储已处理的卖家ID(避免重复)
         self.sellers: Set[str] = set()
-        # 要爬取的ASIN列表(示例ASIN)
-        # self.asin_all = ['B0DKMCJBHK']
 
         if not self.asin_all:
             raise ValueError("必须提供至少一个ASIN")
