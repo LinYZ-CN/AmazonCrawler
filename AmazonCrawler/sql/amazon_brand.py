@@ -59,7 +59,7 @@ class AmazonBrand:
     def get_brands_by_region(self, region):
         """
         根据地区获取品牌列表
-        条件：状态为空 或 (状态为0 且 更新时间大于7天)
+        条件：状态为空 或 (状态为0 且 更新时间大于30天)
 
         :param region: 国家/地区代码
         :return: 该地区下符合条件的品牌列表
@@ -71,7 +71,7 @@ class AmazonBrand:
                                 WHERE region = %s
                                   AND (
                                     status IS NULL
-                                        OR (status = 0 AND updated_at < DATE_SUB(NOW(), INTERVAL 7 DAY))
+                                        OR (status = 0 AND updated_at < DATE_SUB(NOW(), INTERVAL 30 DAY))
                                     )
                                 ''', (region,))
             return [row[0] for row in self.cursor.fetchall()]  # 提取品牌名称列表

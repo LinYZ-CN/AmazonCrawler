@@ -71,7 +71,6 @@ class SellerShopSpider(scrapy.Spider):
             db = AmazonSellerCrawlerDB()
             asin_all = db.get_products_to_crawl(region=self.region)
             self.asin_all = asin_all if asin_all else []
-        # print(f"<UNK>{self.asin_all}")
         # 用于存储已处理的卖家ID(避免重复)
         self.sellers: Set[str] = set()
         # 要爬取的ASIN列表(示例ASIN)

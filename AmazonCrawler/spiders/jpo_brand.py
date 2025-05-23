@@ -37,8 +37,6 @@ class JpoBrandSpider(scrapy.Spider):
     custom_settings = {
         'CONCURRENT_REQUESTS': 1,
         'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
-        # 'CONCURRENT_REQUESTS_PER_IP': 1,
-        # 'DOWNLOAD_DELAY': 1,
 
     }
     def __init__(self, *args, **kwargs):
