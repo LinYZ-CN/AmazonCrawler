@@ -1,7 +1,5 @@
 import json
-
 import scrapy
-
 from AmazonCrawler.items import ProductItem
 from AmazonCrawler.sql.amazon_brand import AmazonBrand
 
@@ -11,10 +9,59 @@ class TmBrandSpider(scrapy.Spider):
     allowed_domains = ["www.tmdn.org"]
     start_urls = ["https://www.tmdn.org/tmview/api/search/results"]
 
-    def __init__(self, *args, **kwargs):
+    COUNTRY_JSON_TEMPLATES = {
+        "UK": {
+            "page": "1",
+            "pageSize": "30",
+            "criteria": "I",
+            "offices": ["GB", "WO"],
+            "territories": ["GB"],
+            "basicSearch": None,  # 动态替换
+            "fTMStatus": ["Filed", "Registered"],
+            "fields": [
+                "ST13",
+                "markImageURI",
+                "tmName",
+                "tmOffice",
+                "applicationNumber",
+                "applicationDate",
+                "tradeMarkStatus",
+                "niceClass",
+                "applicantName",
+            ],
+        },
+        "DE": {
+            "page": "1",
+            "pageSize": "30",
+            "criteria": "I",
+            "offices": ["DE", "EM", "WO"],
+            "territories": ["DE"],
+            "basicSearch": None,  # 动态替换
+            "fTMStatus": ["Filed", "Registered"],
+            "fields": [
+                "ST13",
+                "markImageURI",
+                "tmName",
+                "tmOffice",
+                "applicationNumber",
+                "applicationDate",
+                "tradeMarkStatus",
+                "niceClass",
+                "applicantName",
+            ],
+        },
+    }
+
+    def __init__(self, region=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         db = AmazonBrand()
-        self.brand_all = db.get_brands_by_region(region="UK")
+        self.region = region.upper()  # 统一转为大写（如 UK, DE）
+        self.brand_all = db.get_brands_by_region(region=self.region)
+
+        # 获取对应国家的模板（如果不存在则抛出异常）
+        self.json_data_template = self.COUNTRY_JSON_TEMPLATES.get(self.region)
+        if self.json_data_template is None:
+            raise ValueError(f"Unsupported region: {self.region}")
 
         self.headers = {
             'Accept': 'application/json',
@@ -34,56 +81,26 @@ class TmBrandSpider(scrapy.Spider):
 
     def start_requests(self):
         for brand in self.brand_all:
-            json_data = {
-                'page': '1',
-                'pageSize': '30',
-                'criteria': 'I',
-                'offices': [
-                    'GB',
-                    'WO',
-                ],
-                'territories': [
-                    'GB',
-                ],
-                'basicSearch': brand,
-                'fTMStatus': [
-                    'Filed',
-                    'Registered',
-                ],
-                'fields': [
-                    'ST13',
-                    'markImageURI',
-                    'tmName',
-                    'tmOffice',
-                    'applicationNumber',
-                    'applicationDate',
-                    'tradeMarkStatus',
-                    'niceClass',
-                    'applicantName',
-                ],
-            }
+            # 复制模板并替换 brand
+            json_data = self.json_data_template.copy()
+            json_data["basicSearch"] = brand
+
             yield scrapy.Request(
                 url=self.start_urls[0],
                 method="POST",
                 body=json.dumps(json_data),
-                meta={'brand': brand},
+                meta={'brand': brand, 'region': self.region},  # 传递 region
                 headers=self.headers,
                 callback=self.parse
             )
 
-
     def parse(self, response, **kwargs):
         brand = response.meta['brand']
+        region = response.meta['region']  # 从 meta 获取 region
         item = ProductItem()
         result = json.loads(response.text)
-        if result['totalResults'] == 0:
-            item['brand'] = brand
-            item['region'] = 'UK'
-            item['status'] = 0
-            yield item
-        else:
-            item['brand'] = brand
-            item['region'] = 'UK'
-            item['status'] = 1
-            yield item
 
+        item['brand'] = brand
+        item['region'] = region  # 使用动态 region
+        item['status'] = 1 if result['totalResults'] > 0 else 0
+        yield item

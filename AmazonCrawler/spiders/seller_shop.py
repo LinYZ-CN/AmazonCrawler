@@ -49,7 +49,7 @@ class SellerShopSpider(scrapy.Spider):
     #         'AUTOTHROTTLE_ENABLED': False,  # 禁用动态限速机制，完全靠固定延时
     # }
 
-    def __init__(self, region: str = None,asin_all=None, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         """初始化爬虫实例
 
         Args:
@@ -61,12 +61,13 @@ class SellerShopSpider(scrapy.Spider):
             ValueError: 如果未提供region参数或region无效
         """
         super().__init__(*args, **kwargs)
-
+        asin_all = getattr(self, 'asin_all', None)
+        region = getattr(self, 'region', None)
         self.region = region.upper() if region else None
         if not self.region or self.region not in self.domain_mapping:
             raise ValueError(f"无效的地区缩写：{region}。有效的地区包括：{', '.join(self.domain_mapping.keys())}")
         if isinstance(asin_all, str):
-            self.asin_all = [asin_all]  # 字符串转单元素列表
+            self.asin_all = [part for part in asin_all.strip().split() if part]
 
         # # 从数据中获取
         # if asin_all is None:
