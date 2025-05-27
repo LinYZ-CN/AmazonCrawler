@@ -23,8 +23,8 @@ class AmazonBrand:
                     brand      VARCHAR(255),
                     region     VARCHAR(50) NOT NULL,
                     status     VARCHAR(10),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     UNIQUE KEY uk_brand_region (brand, region),  -- 品牌和地区的唯一组合
                     INDEX idx_brand (brand),  -- 品牌字段索引
                     INDEX idx_region (region)  -- 地区字段索引

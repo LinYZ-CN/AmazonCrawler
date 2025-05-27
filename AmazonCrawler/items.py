@@ -32,3 +32,16 @@ class SellerAsinItem(scrapy.Item):
     asin = scrapy.Field()
     region = scrapy.Field()
 
+
+
+class UsptoItem(scrapy.Item):
+   serial_number = scrapy.Field()
+   registration_number = scrapy.Field()
+   transaction_date = scrapy.Field()
+   filing_date = scrapy.Field()
+   registration_date = scrapy.Field()
+   status_code = scrapy.Field()
+   status_date = scrapy.Field()
+   mark_identification = scrapy.Field()
+   attorney_name = scrapy.Field()
+   case_file_owner_name = scrapy.Field()

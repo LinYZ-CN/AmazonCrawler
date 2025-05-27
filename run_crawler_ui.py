@@ -1,9 +1,10 @@
 import sys
 import subprocess
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QLabel, QComboBox, QLineEdit, 
-    QPushButton, QTextEdit, QVBoxLayout, QHBoxLayout, 
-    QFormLayout, QGroupBox, QSpacerItem, QSizePolicy, QFileDialog, QMessageBox, QDialog, QDialogButtonBox, QDateEdit, QRadioButton, QButtonGroup
+    QApplication, QWidget, QLabel, QComboBox, QLineEdit,
+    QPushButton, QTextEdit, QVBoxLayout, QHBoxLayout,
+    QFormLayout, QGroupBox, QSpacerItem, QSizePolicy, QFileDialog, QMessageBox, QDialog, QDialogButtonBox, QDateEdit,
+    QRadioButton, QButtonGroup
 )
 from PyQt5.QtCore import QThread, pyqtSignal, Qt, QTimer, QDate, QMutex
 from PyQt5.QtGui import QFont, QPixmap, QColor, QPalette
@@ -35,6 +36,7 @@ COUNTRY_DISPLAY_NAMES = {
 }
 COUNTRIES = list(COUNTRY_DISPLAY_NAMES.keys())
 
+
 class CrawlerThread(QThread):
     output_signal = pyqtSignal(str)
     finished_signal = pyqtSignal()
@@ -44,21 +46,38 @@ class CrawlerThread(QThread):
         self.cmd = cmd
         self.mutex = QMutex()
         self._running = True
+        self.process = None
 
     def run(self):
-        process = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        for line in process.stdout:
-            if not self._running:
-                process.terminate()  # 停止进程
+        self.process = subprocess.Popen(
+            self.cmd,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            universal_newlines=True
+        )
+
+        while self._running:
+            line = self.process.stdout.readline()
+            if not line:  # 进程结束
                 break
-            self.output_signal.emit(line)
-        process.wait()
+            self.output_signal.emit(line.strip())
+
+        # 确保进程被终止
+        if self._running and self.process:
+            self.process.terminate()
+            self.process.wait()
+
         self.finished_signal.emit()
 
     def stop(self):
         self.mutex.lock()
         self._running = False
+        if self.process:
+            self.process.terminate()
         self.mutex.unlock()
+
 
 class DateRangeDialog(QDialog):
     def __init__(self, parent=None):
@@ -115,24 +134,29 @@ class DateRangeDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
     def set_today(self):
         today = QDate.currentDate()
         self.start_date.setDate(today)
         self.end_date.setDate(today)
+
     def set_yesterday(self):
         yesterday = QDate.currentDate().addDays(-1)
         self.start_date.setDate(yesterday)
         self.end_date.setDate(yesterday)
+
     def set_week(self):
         today = QDate.currentDate()
-        start = today.addDays(-(today.dayOfWeek()-1))
+        start = today.addDays(-(today.dayOfWeek() - 1))
         self.start_date.setDate(start)
         self.end_date.setDate(today)
+
     def set_month(self):
         today = QDate.currentDate()
         start = QDate(today.year(), today.month(), 1)
         self.start_date.setDate(start)
         self.end_date.setDate(today)
+
     def get_filters(self):
         # 获取国家
         for key, radio in self.country_radios.items():
@@ -145,12 +169,12 @@ class DateRangeDialog(QDialog):
                 self.end_date.date().toString('yyyy-MM-dd'),
                 country)
 
+
 class CrawlerUI(QWidget):
     def __init__(self):
         super().__init__()
-
         self.param_inputs = {}  # 确保参数输入字典初始化
-        self.setWindowTitle('AmazonCrawler 爬虫运行器')
+        self.setWindowTitle('AmazonCrawler')
         self.resize(800, 600)
         self.setWindowIcon(self.style().standardIcon(getattr(self.style(), 'SP_FileDialogInfoView')))
         # Set application style
@@ -194,12 +218,13 @@ class CrawlerUI(QWidget):
                 border: 1px solid #4b8df8;
             }
         """)
-        
+
         self.center()
         self.init_ui()
         self.loading_timer = QTimer()
         self.loading_timer.timeout.connect(self.update_loading_text)
         self.loading_dots = 0
+        self.thread = None
 
     def center(self):
         qr = self.frameGeometry()
@@ -212,34 +237,34 @@ class CrawlerUI(QWidget):
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(20)
-        
+
         # Header section
         header = QHBoxLayout()
         header.setSpacing(20)
-        
+
         # Logo
         logo = QLabel()
         pixmap = self.style().standardIcon(getattr(self.style(), 'SP_ComputerIcon')).pixmap(56, 56)
         logo.setPixmap(pixmap)
-        
+
         # Title
-        title = QLabel('AmazonCrawler 爬虫运行器')
+        title = QLabel('AmazonCrawler')
         title.setFont(QFont('Microsoft YaHei', 22, QFont.Bold))
         title.setStyleSheet('color: #2c3e50;')
-        
+
         header.addWidget(logo)
         header.addWidget(title)
         header.addStretch()
-        
+
         main_layout.addLayout(header)
-        
+
         # Parameters group
         param_group = QGroupBox('参数设置')
         param_group.setFont(QFont('Microsoft YaHei', 13, QFont.Bold))
         param_layout = QFormLayout()
         param_layout.setVerticalSpacing(18)
         param_layout.setHorizontalSpacing(30)
-        
+
         # Spider selection
         self.spider_combo = QComboBox()
         self.spider_combo.setFont(QFont('Microsoft YaHei', 13))
@@ -249,11 +274,11 @@ class CrawlerUI(QWidget):
         spider_label = QLabel('选择爬虫:', self)
         spider_label.setFont(QFont('Microsoft YaHei', 13))
         param_layout.addRow(spider_label, self.spider_combo)
-        
+
         # Country selection（用单选圆点代替下拉框）
         self.country_row_widget = QWidget()
         hbox = QHBoxLayout()
-        hbox.setContentsMargins(0,0,0,0)
+        hbox.setContentsMargins(0, 0, 0, 0)
         hbox.setSpacing(10)
         country_label = QLabel('选择国家:', self)
         country_label.setFont(QFont('Microsoft YaHei', 13))
@@ -269,7 +294,7 @@ class CrawlerUI(QWidget):
             self.country_radios[key] = radio
         self.country_radios[COUNTRIES[0]].setChecked(True)
         self.country_row_widget.setLayout(hbox)
-        
+
         # 参数输入区
         self.param_layout = QFormLayout()
         self.param_layout.setVerticalSpacing(14)
@@ -281,11 +306,11 @@ class CrawlerUI(QWidget):
         self.param_layout.addRow(self.input_area_layout)
         param_layout.addRow(self.param_layout)
         self.update_param_fields(self.spider_combo.currentText())
-        
+
         # Run, Stop, Export and Clear buttons
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
-        
+
         self.run_btn = QPushButton('运行爬虫')
         self.run_btn.setFixedSize(170, 46)
         self.run_btn.setFont(QFont('Microsoft YaHei', 15, QFont.Bold))
@@ -362,10 +387,10 @@ class CrawlerUI(QWidget):
         btn_layout.addWidget(self.clear_log_btn)
         btn_layout.addStretch()
         param_layout.addRow(btn_layout)
-        
+
         param_group.setLayout(param_layout)
         main_layout.addWidget(param_group)
-        
+
         # Output group
         output_group = QGroupBox('运行日志')
         output_group.setFont(QFont('Microsoft YaHei', 13, QFont.Bold))
@@ -438,6 +463,11 @@ class CrawlerUI(QWidget):
             self.param_inputs['url'] = line_edit
 
     def run_crawler(self):
+        # 在开始新任务前停止现有线程
+        if self.thread is not None and self.thread.isRunning():
+            self.thread.stop()
+            self.thread.wait(1000)
+
         spider = self.spider_combo.currentData()
         # 获取当前选中的国家
         for key, radio in self.country_radios.items():
@@ -473,7 +503,7 @@ class CrawlerUI(QWidget):
             self.run_bestseller_full(country, url)
         elif spider in ['jpo_brand', 'tm_brand']:
             # 仅在选择德国或英国时调用tm_brand
-            if country in ['DE','JP','UK']:
+            if country in ['DE', 'JP', 'UK']:
                 self.run_brand_query(spider, country)  # 传递国家参数
             else:
                 self.output_text.append('<span style="color:#e74c3c;">tm_brand仅适用于德国和英国。</span>')
@@ -482,9 +512,14 @@ class CrawlerUI(QWidget):
                 self.run_btn.setText('运行爬虫')
 
     def stop_crawler(self):
-        if hasattr(self, 'thread'):
-            self.thread.stop()  # 停止爬虫线程
+        if self.thread is not None:
+            self.thread.stop()
+            if self.thread.isRunning():
+                self.thread.wait(1000)  # 等待线程结束
             self.output_text.append('<span style="color:#e74c3c;">爬虫已停止。</span>')
+            self.run_btn.setEnabled(True)
+            self.export_btn.setEnabled(True)
+            self.run_btn.setText('运行爬虫')
 
     def clear_log(self):
         self.output_text.clear()  # 清空日志输出区域
@@ -494,16 +529,20 @@ class CrawlerUI(QWidget):
         self.output_text.append('<span style="color:#2ecc71;">[1/4] 卖家信息采集开始...</span>')
         # 将ASIN用引号包裹
         asin_quoted = f'"{asin}"'
-        self.run_spider('seller_shop', country, asin=asin_quoted, next_step=lambda: self.run_spider('seller_asin', country, next_step=lambda: self.run_spider('product_info', country, next_step=lambda: self.run_brand_spider(country))))
+        self.run_spider('seller_shop', country, asin=asin_quoted,
+                        next_step=lambda: self.run_spider('seller_asin', country,
+                                                          next_step=lambda: self.run_spider('product_info', country,
+                                                                                            next_step=lambda: self.run_brand_spider(
+                                                                                                country))))
 
     def run_bestseller_full(self, country, url):
         # 畅销榜采集 → 商品信息采集 → 商标采集（按国家）
         self.output_text.append('<span style="color:#2ecc71;">[1/3] 畅销榜采集开始...</span>')
         # 从URL解析国家代码
         parsed_country = self.parse_country_from_url(url)
-        self.run_spider('best_seller', parsed_country, url=url, 
-                    next_step=lambda: self.run_spider('product_info', parsed_country, 
-                                                    next_step=lambda: self.run_brand_spider(parsed_country)))
+        self.run_spider('best_seller', parsed_country, url=url,
+                        next_step=lambda: self.run_spider('product_info', parsed_country,
+                                                          next_step=lambda: self.run_brand_spider(parsed_country)))
 
     def parse_country_from_url(self, url):
         """从URL中解析国家代码"""
@@ -523,7 +562,7 @@ class CrawlerUI(QWidget):
         if country == 'JP':
             self.output_text.append('<span style="color:#2ecc71;">[商标采集] 日本商标采集开始...</span>')
             self.run_spider('jpo_brand', country, next_step=self.on_all_finished)
-        elif country == 'UK'or'DE':
+        elif country in ['UK', 'DE']:
             self.output_text.append('<span style="color:#2ecc71;">[商标采集] 欧盟商标采集开始...</span>')
             self.run_spider('tm_brand', country, next_step=self.on_all_finished)
         else:
@@ -569,6 +608,9 @@ class CrawlerUI(QWidget):
         self.run_btn.setEnabled(True)
         self.export_btn.setEnabled(True)
         self.run_btn.setText('运行爬虫')
+        # 清理线程引用
+        if self.thread is not None:
+            self.thread = None
 
     def append_output(self, text):
         # Colorize different types of output
@@ -580,7 +622,7 @@ class CrawlerUI(QWidget):
             colored_text = f'<span style="color:#3498db;">{text}</span>'
         else:
             colored_text = f'<span style="color:#2ecc71;">{text}</span>'
-            
+
         self.output_text.append(colored_text)
         self.output_text.moveCursor(self.output_text.textCursor().End)
 
@@ -597,8 +639,18 @@ class CrawlerUI(QWidget):
                 return
             start_date, end_date, country = dlg.get_filters()
             db = AmazonProduct()
-            sql = '''SELECT DISTINCT asin, brand, price, sale, region, status, created_at, updated_at FROM amazon_products WHERE (created_at BETWEEN %s AND %s OR updated_at BETWEEN %s AND %s)'''
-            params = [start_date + ' 00:00:00', end_date + ' 23:59:59', start_date + ' 00:00:00', end_date + ' 23:59:59']
+            sql = '''SELECT DISTINCT asin, \
+                                     brand, \
+                                     price, \
+                                     sale, \
+                                     region, \
+                                     status, \
+                                     created_at, \
+                                     updated_at \
+                     FROM amazon_products \
+                     WHERE (created_at BETWEEN %s AND %s OR updated_at BETWEEN %s AND %s)'''
+            params = [start_date + ' 00:00:00', end_date + ' 23:59:59', start_date + ' 00:00:00',
+                      end_date + ' 23:59:59']
             if country != 'ALL':
                 sql += ' AND region = %s'
                 params.append(country)
@@ -608,7 +660,9 @@ class CrawlerUI(QWidget):
             if not rows:
                 QMessageBox.information(self, '提示', '所选条件下没有可导出的数据！')
                 return
-            file_path, _ = QFileDialog.getSaveFileName(self, '保存为CSV文件', f'amazon_products_{start_date}_to_{end_date}_{country}.csv', 'CSV Files (*.csv)')
+            file_path, _ = QFileDialog.getSaveFileName(self, '保存为CSV文件',
+                                                       f'amazon_products_{start_date}_to_{end_date}_{country}.csv',
+                                                       'CSV Files (*.csv)')
             if not file_path:
                 return
             with open(file_path, 'w', newline='', encoding='utf-8-sig') as f:
@@ -621,12 +675,20 @@ class CrawlerUI(QWidget):
             self.output_text.append(f'<span style="color:#e74c3c;">导出失败: {e}</span>')
             QMessageBox.critical(self, '导出失败', f'导出失败: {e}')
 
+    def closeEvent(self, event):
+        """重写关闭事件，确保线程安全退出"""
+        if self.thread is not None and self.thread.isRunning():
+            self.thread.stop()
+            self.thread.wait(2000)  # 等待最多2秒
+        event.accept()
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    
+
     # Set application style
     app.setStyle('Fusion')
-    
+
     # Create a dark palette
     palette = QPalette()
     palette.setColor(QPalette.Window, QColor(240, 240, 240))
@@ -642,7 +704,7 @@ if __name__ == '__main__':
     palette.setColor(QPalette.Highlight, QColor(52, 152, 219))
     palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
     app.setPalette(palette)
-    
+
     window = CrawlerUI()
     window.show()
     sys.exit(app.exec_())

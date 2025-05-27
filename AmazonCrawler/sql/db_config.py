@@ -4,5 +4,6 @@ DB_CONFIG = {
     'user': 'root',
     'password': '123456',
     'db': 'amazon',
-    'charset': 'utf8',
+    'charset': 'utf8mb4',
+    "init_command": "SET time_zone = '+8:00'"
 }
