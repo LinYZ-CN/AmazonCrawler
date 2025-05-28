@@ -565,8 +565,10 @@ class CrawlerUI(QWidget):
         elif country in ['UK', 'DE']:
             self.output_text.append('<span style="color:#2ecc71;">[商标采集] 欧盟商标采集开始...</span>')
             self.run_spider('tm_brand', country, next_step=self.on_all_finished)
+        elif country in ['US']:
+            self.output_text.append('<span style="color:#888;">[商标采集] 美国商标采集开始...</span>')
+            self.run_spider('uspto_spider', country, next_step=self.on_all_finished)
         else:
-            self.output_text.append('<span style="color:#888;">美国/德国暂不采集商标，流程结束。</span>')
             self.on_all_finished()
 
     def run_brand_query(self, spider, country):

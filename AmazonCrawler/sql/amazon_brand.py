@@ -106,4 +106,4 @@ class AmazonBrand:
 
 if __name__ == '__main__':
     spider = AmazonBrand()
-    print(spider.get_brands_by_region(region='JP'))
+    spider.migrate_brands_from_products()
