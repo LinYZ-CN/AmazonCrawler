@@ -72,12 +72,10 @@ class CrawlerThread(QThread):
         self.finished_signal.emit()
 
     def stop(self):
-        self.mutex.lock()
         self._running = False
-        if self.process:
+        if self.process and self.process.poll() is None:
             self.process.terminate()
-        self.mutex.unlock()
-
+            self.process.wait()
 
 class DateRangeDialog(QDialog):
     def __init__(self, parent=None):
@@ -678,10 +676,9 @@ class CrawlerUI(QWidget):
             QMessageBox.critical(self, '导出失败', f'导出失败: {e}')
 
     def closeEvent(self, event):
-        """重写关闭事件，确保线程安全退出"""
-        if self.thread is not None and self.thread.isRunning():
+        if self.thread and self.thread.isRunning():
             self.thread.stop()
-            self.thread.wait(2000)  # 等待最多2秒
+            self.thread.wait()
         event.accept()
 
 
