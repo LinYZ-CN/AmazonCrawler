@@ -4,6 +4,8 @@
 
 AmazonCrawler 是一个基于 Scrapy + PyQt5 的亚马逊商品与商标信息采集系统，支持美国、英国、日本、德国等站点的商品、卖家、品牌、商标等多维度数据自动化采集、存储与导出。项目包含爬虫、数据库管理、数据导出和可视化界面，适用于电商数据分析、品牌监控等场景。
 
+本项目通过友好的图形界面，让用户无需编程知识即可轻松采集亚马逊平台数据，同时提供命令行接口满足高级用户的自动化需求。
+
 ---
 
 ## 主要功能
@@ -56,11 +58,22 @@ AmazonCrawler/
 - MySQL 5.7/8.0
 - 推荐使用虚拟环境
 
-安装依赖：
+### 安装步骤
 
-```sh
-pip install -r requirements.txt
-```
+1. 克隆或下载项目代码
+2. 创建并激活虚拟环境（可选但推荐）
+   ```sh
+   python -m venv venv
+   # Windows
+   venv\Scripts\activate
+   # macOS/Linux
+   source venv/bin/activate
+   ```
+3. 安装依赖包
+   ```sh
+   pip install -r requirements.txt
+   ```
+4. 配置数据库（见下一节）
 
 ---
 
@@ -132,11 +145,54 @@ scrapy crawl uspto_spider
 
 ## 主要模块说明
 
+### 核心模块
+
 - `AmazonCrawler/items.py`：定义所有爬取数据结构。
 - `AmazonCrawler/pipelines.py`：负责数据入库。
-- `AmazonCrawler/sql/`：所有数据库表结构和操作。
-- `AmazonCrawler/spiders/`：各类采集爬虫。
+- `AmazonCrawler/middlewares.py`：处理请求和响应的中间件，包含国家/地区切换逻辑。
+- `AmazonCrawler/settings.py`：Scrapy 配置参数。
 - `run_crawler_ui.py`：PyQt5 图形界面主程序。
+
+### 数据库模块
+
+- `AmazonCrawler/sql/db_config.py`：数据库连接配置。
+- `AmazonCrawler/sql/amazon_product.py`：商品数据表操作。
+- `AmazonCrawler/sql/amazon_brand.py`：品牌数据表操作。
+- `AmazonCrawler/sql/seller_crawler.py`：卖家数据表操作。
+- `AmazonCrawler/sql/uspto_brand.py`：美国商标数据表操作。
+
+### 爬虫模块
+
+- `AmazonCrawler/spiders/best_seller.py`：亚马逊畅销榜爬虫，支持多站点、自动翻页。
+- `AmazonCrawler/spiders/product_info.py`：商品详情爬虫，提取价格、评分、库存等信息。
+- `AmazonCrawler/spiders/seller_shop.py`：卖家店铺爬虫，采集卖家基本信息。
+- `AmazonCrawler/spiders/seller_asin.py`：卖家商品爬虫，采集卖家所有在售商品。
+- `AmazonCrawler/spiders/jpo_brand.py`：日本商标查询爬虫，查询品牌在日本的商标状态。
+- `AmazonCrawler/spiders/tm_brand.py`：欧盟商标查询爬虫，查询品牌在欧盟的商标状态。
+- `AmazonCrawler/spiders/uspto_spider.py`：美国商标查询爬虫，查询品牌在美国的商标状态。
+
+---
+
+## 技术架构
+
+本项目采用分层架构设计，主要分为以下几层：
+
+1. **界面层**：基于 PyQt5 构建的图形用户界面，提供流程选择、参数输入和结果展示。
+2. **爬虫层**：基于 Scrapy 框架的多个爬虫，负责数据采集和解析。
+3. **数据层**：MySQL 数据库存储和管理采集的数据。
+4. **业务逻辑层**：连接界面和数据层，处理数据流转和业务规则。
+
+### 数据流向
+
+```
+用户输入 → PyQt5界面 → Scrapy爬虫 → 数据解析 → MySQL数据库 → 数据导出/展示
+```
+
+### 并发与性能
+
+- 使用 Scrapy 的异步请求机制提高采集效率
+- 针对不同站点和爬虫类型，自动调整并发请求数
+- 实现请求重试和错误处理机制，提高稳定性
 
 ---
 
@@ -145,15 +201,45 @@ scrapy crawl uspto_spider
 - **数据库连接失败**：请检查 MySQL 是否启动、配置是否正确。
 - **采集不到数据**：部分站点有反爬机制，建议适当调整请求频率或更换 IP。
 - **界面乱码**：请确保系统字体支持中文，或调整 PyQt5 字体设置。
+- **爬虫运行缓慢**：可能是网络问题或目标站点限流，尝试在 settings.py 中调整 DOWNLOAD_DELAY。
+- **数据不完整**：某些字段可能因页面结构变化而无法提取，请检查并更新相应的 XPath 选择器。
+- **内存占用过高**：处理大量数据时可能发生，建议增加分批处理或调整 CONCURRENT_REQUESTS 参数。
+
+---
+
+## 未来计划
+
+项目计划在未来版本中添加以下功能：
+
+- 支持更多亚马逊国际站点（如加拿大、澳大利亚等）
+- 增加商品评论采集功能
+- 添加数据可视化分析模块
+- 实现自动化定时采集任务
+- 优化反爬策略，提高稳定性
+- 增加更多商标数据源
 
 ---
 
 ## 贡献与反馈
 
-如有建议、Bug 或需求，欢迎提交 Issue 或 PR。
+如有建议、Bug 或需求，欢迎提交 Issue 或 PR。项目持续更新中，欢迎参与贡献！
+
+### 如何贡献
+
+1. Fork 本仓库
+2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开一个 Pull Request
 
 ---
 
 ## License
 
 本项目仅供学习与研究使用，禁止用于商业用途。
+
+---
+
+## 致谢
+
+感谢所有为本项目做出贡献的开发者！
