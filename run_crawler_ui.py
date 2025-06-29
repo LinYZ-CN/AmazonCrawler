@@ -5,12 +5,11 @@ import csv
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QComboBox, QLineEdit,
     QPushButton, QTextEdit, QVBoxLayout, QHBoxLayout,
-    QFormLayout, QGroupBox, QSpacerItem, QSizePolicy,
-    QFileDialog, QMessageBox, QDialog, QDialogButtonBox,
+    QFormLayout, QGroupBox,QFileDialog, QMessageBox, QDialog, QDialogButtonBox,
     QDateEdit, QRadioButton, QButtonGroup, QStyle
 )
-from PySide6.QtCore import QThread, Signal, Qt, QTimer, QDate, QMutex
-from PySide6.QtGui import QFont, QPixmap, QColor, QPalette, QTextCursor
+from PySide6.QtCore import QThread, Signal, QTimer, QDate, QMutex
+from PySide6.QtGui import QFont, QColor, QPalette, QTextCursor
 from AmazonCrawler.sql.amazon_product import AmazonProduct
 
 # 设置环境变量防止 macOS 输入法警告
