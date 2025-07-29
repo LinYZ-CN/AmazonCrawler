@@ -25,7 +25,7 @@ class AmazonProduct:
                                     price      DECIMAL(10, 2),
                                     sale       INT,
                                     region     VARCHAR(50) NOT NULL,
-                                    status     VARCHAR(10),
+                                    status     VARCHAR(255),
                                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                                     UNIQUE KEY uk_asin_region (asin, region),

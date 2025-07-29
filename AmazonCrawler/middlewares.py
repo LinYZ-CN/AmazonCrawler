@@ -108,9 +108,9 @@ class RegionCookiesMiddleware:
 
     REGION_COOKIES = {
         "US": {
-            'session-id': '142-0777523-8131625',
+            'session-id': '145-0344408-1389939',
             'lc-main': 'en_US',
-            'ubid-main': '135-0851440-4909440',
+            'ubid-main': '135-6671816-7154329',
         },
         "UK": {
             'session-id': '261-5340826-5234657',

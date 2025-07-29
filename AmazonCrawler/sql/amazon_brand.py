@@ -22,7 +22,7 @@ class AmazonBrand:
                     id         INT AUTO_INCREMENT PRIMARY KEY,
                     brand      VARCHAR(255),
                     region     VARCHAR(50) NOT NULL,
-                    status     VARCHAR(10),
+                    status     VARCHAR(255),
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     UNIQUE KEY uk_brand_region (brand, region),  -- 品牌和地区的唯一组合
