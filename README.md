@@ -63,7 +63,7 @@ python run_crawler_ui.py
 
 - **畅销榜采集**  
   ```bash
-  scrapy crawl best_seller -a url="亚马逊畅销商品列表URL"
+  scrapy crawl best_seller -a url="https://www.amazon.com/s?rh=n%3A12896671&fs=true"
   ```
   - `url` 参数为畅销榜页面地址，支持 amazon.com/.co.uk/.de/.co.jp
 
@@ -75,7 +75,7 @@ python run_crawler_ui.py
 
 - **卖家商品采集**  
   ```bash
-  scrapy crawl seller_asin -a region=US -a seller_all=卖家ID
+  scrapy crawl seller_asin -a region=US -a seller_all="A2HSJEX0PJ2MFY"
   ```
   - `seller_all` 可为单个或多个卖家ID
 
@@ -118,7 +118,8 @@ AmazonCrawler/
 
 - **GUI无法启动/报错**：请确认已正确安装 PySide6 及相关依赖，且 Python 版本符合要求。
 - **数据库连接失败**：请检查 `db_config.py` 配置及数据库服务状态。
-- **采集无数据**：请确认参数填写正确，目标页面可正常访问，且未被反爬虫机制限制。
+- **采集无数据**：请确认参数填写正确，目标页面可正常访问，且未被反爬虫机制限制(触发反扒机制需要修改中间件（middlewares）中的cookies或者更换ip)。
+
 
 ## 联系与支持
 

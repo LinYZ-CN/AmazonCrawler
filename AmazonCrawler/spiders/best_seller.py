@@ -90,7 +90,7 @@ class BestSellerSpider(scrapy.Spider):
             self.logger.error(f"无法从URL {self.url} 中识别地区")
             return
 
-        for page in range(1, 401):  # 翻页400页
+        for page in range(1, 10):  # 翻页400页
             # 确保URL格式正确（移除可能存在的重复参数）
             base_url = self.url.split('&')[0]  # 获取基础URL
             yield scrapy.Request(

@@ -17,9 +17,6 @@ from AmazonCrawler.sql.uspto_brand import UsptoBrand
 class AmazonSellerCrawlerPipeline:
     def __init__(self):
         self.db_crawl = AmazonSellerCrawlerDB()
-        self.db_product = AmazonProduct()
-        self.db_brand = AmazonBrand()
-        self.uspto_brand = UsptoBrand()
     def process_item(self, item, spider):
         if spider.name == "seller_asin":
             seller_id = item['seller_id']
@@ -37,19 +34,22 @@ class AmazonSellerCrawlerPipeline:
             self.db_crawl.insert_seller_product(seller_id=seller_id, asin=asin,delivery=delivery, region=region)
 
         elif spider.name in ["product_info","best_seller"]:
+            db_product = AmazonProduct()
             asin = item['asin']
             brand = item['brand']
             price = item['price']
             sale = item['sale']
             region = item['region']
-            self.db_product.insert_product(asin=asin, brand=brand, price=price, sale=sale, region=region)
+            db_product.insert_product(asin=asin, brand=brand, price=price, sale=sale, region=region)
         elif spider.name in ["jpo_brand", "tm_brand"]:
+            db_brand = AmazonBrand()
             brand = item['brand']
             region = item['region']
             status = item['status']
-            self.db_brand.update_brand_status(brand=brand, region=region, status=status)
+            db_brand.update_brand_status(brand=brand, region=region, status=status)
 
         elif spider.name in ["uspto_brand"]:
+            uspto_brand = UsptoBrand()
             item = {
                 "serial_number": item['serial_number'],
                 "registration_number": item['registration_number'],
@@ -62,5 +62,5 @@ class AmazonSellerCrawlerPipeline:
                 "attorney_name":item['attorney_name'],
                 "case_file_owner_name": item['case_file_owner_name'],
             }
-            self.uspto_brand.insert_or_update_brand(item)
+            uspto_brand.insert_or_update_brand(item)
         return item

@@ -53,11 +53,11 @@ class SellerAsinSpider(scrapy.Spider):
         #     'AC7TDJNE5BJJD',  # 示例卖家ID
         # ]
         if isinstance(seller_all, str):
-            self.asin_all = [seller_all]
+            self.seller_all = [seller_all]
         if seller_all is None:
             db = AmazonSellerCrawlerDB()
             seller_all = db.get_sellers_to_crawl(region=self.region)
-        self.seller_all = seller_all if seller_all else []
+            self.seller_all = seller_all if seller_all else []
 
         if not self.seller_all:
             raise ValueError("必须提供至少一个卖家ID")
